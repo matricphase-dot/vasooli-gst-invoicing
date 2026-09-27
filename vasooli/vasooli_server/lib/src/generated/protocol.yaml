@@ -1,0 +1,17 @@
+emailIdp:
+  - login:
+  - startRegistration:
+  - verifyRegistrationCode:
+  - finishRegistration:
+  - startPasswordReset:
+  - verifyPasswordResetCode:
+  - finishPasswordReset:
+  - hasAccount:
+jwtRefresh:
+  - refreshAccessToken:
+invoices:
+  - createInvoice:
+  - listInvoices:
+  - markPaid:
+greeting:
+  - hello:

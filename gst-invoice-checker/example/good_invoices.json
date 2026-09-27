@@ -1,0 +1,37 @@
+{
+  "supplierStateCode": 27,
+  "financialYear": "2026-27",
+  "invoices": [
+    {
+      "number": "1",
+      "issueDate": "2026-04-10",
+      "clientName": "Acme Consulting LLP",
+      "clientGstin": "27AAACA1234A1ZK",
+      "placeOfSupplyStateCode": 27,
+      "lines": [
+        {"description": "Flutter app development, April", "hsnSac": "998314", "taxableValue": 45000, "ratePercent": 18},
+        {"description": "Play Store release support", "hsnSac": "998314", "taxableValue": 5000, "ratePercent": 18}
+      ],
+      "totalTaxable": 50000,
+      "cgst": 4500,
+      "sgst": 4500,
+      "igst": 0,
+      "grandTotal": 59000
+    },
+    {
+      "number": "2",
+      "issueDate": "2026-05-22",
+      "clientName": "Bengaluru Backend Co",
+      "clientGstin": "29AABCB7654P1ZZ",
+      "placeOfSupplyStateCode": 29,
+      "lines": [
+        {"description": "API integration workshop, 2 days", "hsnSac": "998314", "taxableValue": 80000, "ratePercent": 18}
+      ],
+      "totalTaxable": 80000,
+      "cgst": 0,
+      "sgst": 0,
+      "igst": 14400,
+      "grandTotal": 94400
+    }
+  ]
+}

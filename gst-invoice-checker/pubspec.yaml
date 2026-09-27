@@ -1,0 +1,13 @@
+name: gst_invoice_checker
+description: >-
+  Offline GST invoice validation for Indian freelancers: GSTIN check digit,
+  Rule 46 document numbers, place-of-supply tax split (CGST+SGST vs IGST),
+  and rounding on the taxable total.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.8.0
+
+dev_dependencies:
+  test: ^1.24.0

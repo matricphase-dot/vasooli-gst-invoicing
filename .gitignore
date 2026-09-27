@@ -1,0 +1,8 @@
+# Pub artifacts
+.dart_tool/
+build/
+# Serverpod embedded-Postgres runtime artifacts
+.serverpod/
+# Local IDE
+.idea/
+*.iml

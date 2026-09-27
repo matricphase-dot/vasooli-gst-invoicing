@@ -1,0 +1,13 @@
+name: gst_invoicing_demo
+description: >-
+  Live end-to-end demo driver for the Vasooli GST invoicing server.
+  Runs the story of the hackathon demo against the real API over HTTP.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  vasooli_client:
+    path: ../vasooli/vasooli_client

@@ -1,0 +1,6 @@
+class: InvoiceLine
+fields:
+  description: String
+  hsnSac: String
+  taxableValue: double
+  gstRatePercent: double

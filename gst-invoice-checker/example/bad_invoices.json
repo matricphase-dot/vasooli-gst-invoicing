@@ -1,0 +1,49 @@
+{
+  "supplierStateCode": 27,
+  "financialYear": "2026-27",
+  "invoices": [
+    {
+      "number": "1",
+      "issueDate": "2026-04-10",
+      "clientName": "Misty Typo Services",
+      "clientGstin": "27AAACA1234A1Z2",
+      "placeOfSupplyStateCode": 27,
+      "lines": [
+        {"description": "Design sprint", "hsnSac": "99", "taxableValue": 10000, "ratePercent": 18}
+      ],
+      "totalTaxable": 10000,
+      "cgst": 0,
+      "sgst": 0,
+      "igst": 1800,
+      "grandTotal": 11800
+    },
+    {
+      "number": "1",
+      "issueDate": "2026-04-18",
+      "clientName": "Duplicate Number Traders",
+      "placeOfSupplyStateCode": 29,
+      "lines": [
+        {"description": "", "hsnSac": "998314", "taxableValue": 333.33, "ratePercent": 20}
+      ],
+      "totalTaxable": 333.33,
+      "cgst": 30,
+      "sgst": 30,
+      "igst": 0,
+      "grandTotal": 393.33
+    },
+    {
+      "number": "5",
+      "issueDate": "2026-06-01",
+      "clientName": "Gap After Cancelled",
+      "placeOfSupplyStateCode": 27,
+      "lines": [
+        {"description": "Retainer, June", "hsnSac": "998314", "taxableValue": 20000, "ratePercent": 18}
+      ],
+      "totalTaxable": 20000,
+      "cgst": 1800,
+      "sgst": 1800,
+      "igst": 0,
+      "grandTotal": 23601
+    }
+  ]
+}

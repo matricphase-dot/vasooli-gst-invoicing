@@ -1,0 +1,21 @@
+class: Invoice
+table: invoice
+fields:
+  invoiceNumber: String
+  financialYear: String
+  issueDate: DateTime
+  clientName: String
+  clientGstin: String?
+  supplierStateCode: int
+  placeOfSupplyStateCode: int
+  status: InvoiceStatus
+  lines: List<InvoiceLine>
+  totalTaxable: double
+  cgst: double
+  sgst: double
+  igst: double
+  grandTotal: double
+indexes:
+  invoice_number_per_fy_unique:
+    fields: financialYear,invoiceNumber
+    unique: true
