@@ -12,6 +12,10 @@ jwtRefresh:
 invoices:
   - createInvoice:
   - listInvoices:
+  - recordPayment:
   - markPaid:
+  - scanOverdue:
+  - monthlySummary:
+  - watchInvoices:
 greeting:
   - hello:

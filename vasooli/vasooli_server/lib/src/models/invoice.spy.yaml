@@ -4,6 +4,7 @@ fields:
   invoiceNumber: String
   financialYear: String
   issueDate: DateTime
+  dueDate: DateTime?
   clientName: String
   clientGstin: String?
   supplierStateCode: int

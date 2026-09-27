@@ -21,6 +21,8 @@ import 'package:vasooli_client/src/protocol/greetings/greeting.dart'
     as _inmikfhn;
 import 'package:vasooli_client/src/protocol/invoice.dart' as _irxy21c4;
 import 'package:vasooli_client/src/protocol/invoice_line.dart' as _i9kgg74g;
+import 'package:vasooli_client/src/protocol/monthly_summary.dart' as _irhwvkc5;
+import 'package:vasooli_client/src/protocol/payment_method.dart' as _itay1u2w;
 import 'protocol.dart' as _il2as5qe;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
@@ -267,6 +269,7 @@ class EndpointInvoices extends _isc.EndpointRef {
     required int placeOfSupplyStateCode,
     required String financialYear,
     required List<_i9kgg74g.InvoiceLine> lines,
+    DateTime? dueDate,
   }) => caller.callServerEndpoint<_irxy21c4.Invoice>(
     'invoices',
     'createInvoice',
@@ -277,6 +280,7 @@ class EndpointInvoices extends _isc.EndpointRef {
       'placeOfSupplyStateCode': placeOfSupplyStateCode,
       'financialYear': financialYear,
       'lines': lines,
+      'dueDate': dueDate,
     },
   );
 
@@ -288,11 +292,75 @@ class EndpointInvoices extends _isc.EndpointRef {
         {'financialYear': financialYear},
       );
 
+  /// Records a (full) payment against an invoice and flips it to paid.
+  ///
+  /// Typical use: the freelancer sees the client's UPI credit notification,
+  /// opens the invoice, taps "paid", optionally notes the UPI reference.
+  /// Server-side checks: invoice exists, not already paid, amount matches
+  /// the invoice total exactly (partial payments deliberately not yet
+  /// supported — under-recording is worse than no recording for taxes).
+  _ida.Future<_irxy21c4.Invoice> recordPayment({
+    required int invoiceId,
+    required double amount,
+    required _itay1u2w.PaymentMethod method,
+    String? upiReference,
+    String? note,
+  }) => caller.callServerEndpoint<_irxy21c4.Invoice>(
+    'invoices',
+    'recordPayment',
+    {
+      'invoiceId': invoiceId,
+      'amount': amount,
+      'method': method,
+      'upiReference': upiReference,
+      'note': note,
+    },
+  );
+
   _ida.Future<_irxy21c4.Invoice> markPaid(int invoiceId) =>
       caller.callServerEndpoint<_irxy21c4.Invoice>(
         'invoices',
         'markPaid',
         {'invoiceId': invoiceId},
+      );
+
+  /// Flips non-paid invoices past their due date to `overdue`.
+  /// Returns the number changed. This is exactly the same logic the daily
+  /// future call runs — exposed as an endpoint so the demo (and the app)
+  /// can trigger it on demand.
+  _ida.Future<int> scanOverdue(String financialYear) =>
+      caller.callServerEndpoint<int>(
+        'invoices',
+        'scanOverdue',
+        {'financialYear': financialYear},
+      );
+
+  /// Month-end view: counts by status, tax totals (the GSTR story) and how
+  /// much money came in vs is still out. Computed from the ledger rows live.
+  _ida.Future<_irhwvkc5.MonthlySummary> monthlySummary(
+    String financialYear,
+    int month,
+  ) => caller.callServerEndpoint<_irhwvkc5.MonthlySummary>(
+    'invoices',
+    'monthlySummary',
+    {
+      'financialYear': financialYear,
+      'month': month,
+    },
+  );
+
+  /// The live feed every device subscribes to. Any create / payment /
+  /// overdue flip anywhere posts to this channel; subscribing here is the
+  /// entire "second device updates instantly" story — no polling.
+  _ida.Stream<_irxy21c4.Invoice> watchInvoices() =>
+      caller.callStreamingServerEndpoint<
+        _ida.Stream<_irxy21c4.Invoice>,
+        _irxy21c4.Invoice
+      >(
+        'invoices',
+        'watchInvoices',
+        {},
+        {},
       );
 }
 

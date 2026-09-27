@@ -17,10 +17,14 @@ import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 import 'package:serverpod_test/serverpod_test.dart' as _ist;
+import 'package:vasooli_server/src/generated/future_calls.dart' as _io1h73uc;
 import 'package:vasooli_server/src/generated/greetings/greeting.dart'
     as _idj35260;
 import 'package:vasooli_server/src/generated/invoice.dart' as _iuwowljv;
 import 'package:vasooli_server/src/generated/invoice_line.dart' as _i3lj72fj;
+import 'package:vasooli_server/src/generated/monthly_summary.dart' as _iu247jge;
+import 'package:vasooli_server/src/generated/payment_method.dart' as _i2zs3gba;
+import 'package:vasooli_server/src/generated/reminder_scan.dart' as _i9v5mxca;
 import 'package:vasooli_server/src/generated/protocol.dart';
 import 'package:vasooli_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -154,6 +158,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final futureCalls = _FutureCalls();
+
   late final _EmailIdpEndpoint emailIdp;
 
   late final _JwtRefreshEndpoint jwtRefresh;
@@ -187,6 +193,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
   }
+}
+
+class _FutureCalls {
+  late final reminderCalls = _ReminderCallsFutureCall();
 }
 
 class _EmailIdpEndpoint {
@@ -525,6 +535,7 @@ class _InvoicesEndpoint {
     required int placeOfSupplyStateCode,
     required String financialYear,
     required List<_i3lj72fj.InvoiceLine> lines,
+    DateTime? dueDate,
   }) async {
     return _ist.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -544,6 +555,7 @@ class _InvoicesEndpoint {
             'placeOfSupplyStateCode': placeOfSupplyStateCode,
             'financialYear': financialYear,
             'lines': lines,
+            'dueDate': dueDate,
           }),
           serializationManager: _serializationManager,
         );
@@ -591,6 +603,47 @@ class _InvoicesEndpoint {
     });
   }
 
+  _ida.Future<_iuwowljv.Invoice> recordPayment(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required int invoiceId,
+    required double amount,
+    required _i2zs3gba.PaymentMethod method,
+    String? upiReference,
+    String? note,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'invoices',
+            method: 'recordPayment',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'invoices',
+          methodName: 'recordPayment',
+          parameters: _ist.testObjectToJson({
+            'invoiceId': invoiceId,
+            'amount': amount,
+            'method': method,
+            'upiReference': upiReference,
+            'note': note,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iuwowljv.Invoice>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<_iuwowljv.Invoice> markPaid(
     _ist.TestSessionBuilder sessionBuilder,
     int invoiceId,
@@ -620,6 +673,103 @@ class _InvoicesEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+
+  _ida.Future<int> scanOverdue(
+    _ist.TestSessionBuilder sessionBuilder,
+    String financialYear,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'invoices',
+            method: 'scanOverdue',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'invoices',
+          methodName: 'scanOverdue',
+          parameters: _ist.testObjectToJson({'financialYear': financialYear}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<int>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iu247jge.MonthlySummary> monthlySummary(
+    _ist.TestSessionBuilder sessionBuilder,
+    String financialYear,
+    int month,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'invoices',
+            method: 'monthlySummary',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'invoices',
+          methodName: 'monthlySummary',
+          parameters: _ist.testObjectToJson({
+            'financialYear': financialYear,
+            'month': month,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iu247jge.MonthlySummary>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Stream<_iuwowljv.Invoice> watchInvoices(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) {
+    var _localTestStreamManager = _ist.TestStreamManager<_iuwowljv.Invoice>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'invoices',
+              method: 'watchInvoices',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'invoices',
+              methodName: 'watchInvoices',
+              arguments: {},
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
   }
 }
 
@@ -662,5 +812,23 @@ class _GreetingEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+}
+
+class _ReminderCallsFutureCall {
+  Future<void> overdueScan(
+    _ist.TestSessionBuilder sessionBuilder,
+    _i9v5mxca.ReminderScan trigger,
+  ) async {
+    var _localUniqueSession =
+        (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild();
+    try {
+      await _io1h73uc.ReminderCallsOverdueScanFutureCall().invoke(
+        _localUniqueSession,
+        trigger,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
   }
 }

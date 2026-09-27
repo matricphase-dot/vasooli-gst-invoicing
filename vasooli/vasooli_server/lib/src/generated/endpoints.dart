@@ -15,11 +15,14 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
+import 'package:vasooli_server/src/generated/future_calls.dart' as _io1h73uc;
 import 'package:vasooli_server/src/generated/invoice_line.dart' as _i3lj72fj;
+import 'package:vasooli_server/src/generated/payment_method.dart' as _i2zs3gba;
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/jwt_refresh_endpoint.dart' as _inwq3ztq;
 import '../endpoints/invoices.dart' as _i2q1q35v;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
+export 'future_calls.dart' show ServerpodFutureCallsGetter;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
@@ -293,6 +296,11 @@ class Endpoints extends _is.EndpointDispatch {
               type: _is.getType<List<_i3lj72fj.InvoiceLine>>(),
               nullable: false,
             ),
+            'dueDate': _is.ParameterDescription(
+              name: 'dueDate',
+              type: _is.getType<DateTime?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -307,6 +315,7 @@ class Endpoints extends _is.EndpointDispatch {
                     placeOfSupplyStateCode: params['placeOfSupplyStateCode'],
                     financialYear: params['financialYear'],
                     lines: params['lines'],
+                    dueDate: params['dueDate'],
                   ),
         ),
         'listInvoices': _is.MethodConnector(
@@ -328,6 +337,49 @@ class Endpoints extends _is.EndpointDispatch {
                     params['financialYear'],
                   ),
         ),
+        'recordPayment': _is.MethodConnector(
+          name: 'recordPayment',
+          params: {
+            'invoiceId': _is.ParameterDescription(
+              name: 'invoiceId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'amount': _is.ParameterDescription(
+              name: 'amount',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+            'method': _is.ParameterDescription(
+              name: 'method',
+              type: _is.getType<_i2zs3gba.PaymentMethod>(),
+              nullable: false,
+            ),
+            'upiReference': _is.ParameterDescription(
+              name: 'upiReference',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'note': _is.ParameterDescription(
+              name: 'note',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['invoices'] as _i2q1q35v.InvoicesEndpoint)
+                  .recordPayment(
+                    session,
+                    invoiceId: params['invoiceId'],
+                    amount: params['amount'],
+                    method: params['method'],
+                    upiReference: params['upiReference'],
+                    note: params['note'],
+                  ),
+        ),
         'markPaid': _is.MethodConnector(
           name: 'markPaid',
           params: {
@@ -346,6 +398,63 @@ class Endpoints extends _is.EndpointDispatch {
                     session,
                     params['invoiceId'],
                   ),
+        ),
+        'scanOverdue': _is.MethodConnector(
+          name: 'scanOverdue',
+          params: {
+            'financialYear': _is.ParameterDescription(
+              name: 'financialYear',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['invoices'] as _i2q1q35v.InvoicesEndpoint)
+                  .scanOverdue(
+                    session,
+                    params['financialYear'],
+                  ),
+        ),
+        'monthlySummary': _is.MethodConnector(
+          name: 'monthlySummary',
+          params: {
+            'financialYear': _is.ParameterDescription(
+              name: 'financialYear',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'month': _is.ParameterDescription(
+              name: 'month',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['invoices'] as _i2q1q35v.InvoicesEndpoint)
+                  .monthlySummary(
+                    session,
+                    params['financialYear'],
+                    params['month'],
+                  ),
+        ),
+        'watchInvoices': _is.MethodStreamConnector(
+          name: 'watchInvoices',
+          params: {},
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['invoices'] as _i2q1q35v.InvoicesEndpoint)
+                  .watchInvoices(session),
         ),
       },
     );
@@ -378,5 +487,10 @@ class Endpoints extends _is.EndpointDispatch {
       ..initializeEndpoints(server);
     modules['serverpod_auth_core'] = _iacs.Endpoints()
       ..initializeEndpoints(server);
+  }
+
+  @override
+  _is.FutureCallDispatch? get futureCalls {
+    return _io1h73uc.FutureCalls();
   }
 }

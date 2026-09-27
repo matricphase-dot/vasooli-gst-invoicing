@@ -1,51 +1,82 @@
 ╔══════════════════════════════════════════════════════════════════╗
 ║  VASOOLI — GST invoicing for Indian freelancers, live on        ║
 ║  Serverpod 4. Demo driver, no UI: every call below is a real    ║
-║  HTTP call to the running server.                               ║
+║  request to the running server.                                 ║
 ╚══════════════════════════════════════════════════════════════════╝
 
 Scenario: you are a freelancer in Maharashtra (state 27), FY 2026-27.
 
-── 1. Invoice for a Mumbai client (intra-state) ──────────────────
-   2 lines, ₹50,000 @ 18% GST. Tax split is computed server-side;
-   the client app never sends tax amounts.
-  #4  Acme Consulting LLP        draft  taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-   → place of supply == supplier state ⇒ CGST ₹4,500 + SGST ₹4,500, no IGST. Invoice number "4" assigned by the server (sequential per FY).
+── 0. The live feed is already listening ─────────────────────────
+   subscribed to the invoices stream — every server-side change from
+   here on should appear over the wire, no polling.
 
-── 2. Invoice for a Bengaluru client (inter-state) ───────────────
-  #5  Bengaluru Backend Co       draft  taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-   → inter-state supply ⇒ IGST ₹14,400 at the full rate, and this is invoice number "5" — the next in the series.
+── 1. Invoice for a Mumbai client (intra-state), due next week ───
+  #7  Acme Consulting LLP        draft   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+   → place of supply == supplier state ⇒ CGST ₹4,500 + SGST ₹4,500. Number "7" assigned by the server (sequential per FY). Due 2026-10-04.
+
+── 2. Invoice for a Bengaluru client (inter-state), ALREADY DUE ──
+  #8  Bengaluru Backend Co       draft   taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+   → inter-state supply ⇒ IGST ₹14,400; due date is in
+   the past, so the overdue machinery below should catch it.
 
 ── 3. The GSTIN typo that spreadsheet invoicing never catches ────
-   Same client GSTIN as invoice #4 but with a wrong last character:
    ✓ server refused it: GSTIN "27AAACA1234A1Z2" failed format or check-digit validation — one of its 15 characters is mistyped
-   (the format is fine; the mod-36 check digit exposes the typo —
+   (format is fine; the mod-36 check digit exposes the typo —
    without this, the real client cannot claim input tax credit)
 
 ── 4. The ledger, live from Postgres ─────────────────────────────
-  #1  Smoke Test Client          paid   taxable     ₹1,000 CGST     ₹90 SGST     ₹90 IGST        ₹0 total     ₹1,180
-  #2  Acme Consulting LLP        paid   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #3  Bengaluru Backend Co       draft  taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #4  Acme Consulting LLP        draft  taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #5  Bengaluru Backend Co       draft  taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #1  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #2  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #3  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #4  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #5  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #6  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #7  Acme Consulting LLP        draft   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #8  Bengaluru Backend Co       draft   taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
   ──────────────────
-  outstanding: ₹247,800    received: ₹60,180
+  outstanding: ₹436,600    received: ₹177,000
 
-── 5. Acme pays by UPI — mark as paid, ledger drops live ─────────
-   #4 Acme Consulting LLP → status PAID
-  #1  Smoke Test Client          paid   taxable     ₹1,000 CGST     ₹90 SGST     ₹90 IGST        ₹0 total     ₹1,180
-  #2  Acme Consulting LLP        paid   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #3  Bengaluru Backend Co       draft  taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #4  Acme Consulting LLP        paid   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #5  Bengaluru Backend Co       draft  taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+── 5. The daily overdue scan runs (a future call runs it at 09:00) 
+   1 invoice(s) flipped to overdue this pass:
+  #2  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #4  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #6  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #8  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+
+── 6. Acme pays ₹59,000 by UPI — recorded with the UPI ref ──
+   #7 Acme Consulting LLP → PAID   UPI ref UTR-20260927-8843 saved on the Payment row
+   (an extra ₹1 or a repeat tap of pay is refused — exact-amount ledger)
+  #1  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #2  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #3  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #4  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #5  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #6  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #7  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #8  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
   ──────────────────
-  outstanding: ₹188,800    received: ₹119,180
+  outstanding: ₹377,600    received: ₹236,000
+
+── 7. What my phone would have shown the whole time ──────────────
+   over the invoices stream, unprompted, arrived:
+  #7  Acme Consulting LLP        draft   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #8  Bengaluru Backend Co       draft   taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #8  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #7  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+   → the same hook the Flutter app uses; its UI tier is built on
+     exactly these events, which is why two devices stay in sync.
+
+── 8. Month-end, done ────────────────────────────────────────────
+   FY 2026-27, month 9: 8 invoices (4 paid, 4 overdue, 0 draft, 0 sent)
+   taxable ₹520,000  CGST ₹18,000  SGST ₹18,000  IGST ₹57,600
+   collected ₹236,000  still out ₹377,600
 
 ── What this demo proves ─────────────────────────────────────────
-   • Typed end-to-end models: Dart from the UI to Postgres, no SQL,
-     no hand-written JSON plumbing.
-   • Server-side invariants the app cannot bypass: sequential
-     per-FY invoice numbers, place-of-supply tax split, rounding on
-     the taxable total, GSTIN check-digit validation.
-   • It actually works: HTTP 200 on the API root, and every number
-     above comes from a live database, not a mock.
+   • typed end-to-end models (Dart UI → Postgres, no SQL, no JSON),
+   • server-side invariants the app cannot bypass: sequential per-FY
+     numbers, place-of-supply tax split, rounding on the total, GSTIN
+     check-digit validation, no partial payments, no double-paying;
+   • Serverpod 4 doing what it’s good at: a real stream feeding every
+     device, a recurring future call for the daily overdue scan, and
+     typed exceptions reaching the caller with a precise message;
+   • it works: every number above is a live DB row, not a mock.

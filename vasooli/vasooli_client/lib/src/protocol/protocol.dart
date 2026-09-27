@@ -23,11 +23,19 @@ import 'invalid_gstin_exception.dart' as _izt6mvhj;
 import 'invoice.dart' as _ifja8moh;
 import 'invoice_line.dart' as _inr7qgak;
 import 'invoice_status.dart' as _iat4j3t6;
+import 'monthly_summary.dart' as _iu6nkcru;
+import 'payment.dart' as _ikmm2vup;
+import 'payment_method.dart' as _imotz5ce;
+import 'reminder_scan.dart' as _i8razsu4;
 export 'greetings/greeting.dart';
 export 'invalid_gstin_exception.dart';
 export 'invoice.dart';
 export 'invoice_line.dart';
 export 'invoice_status.dart';
+export 'monthly_summary.dart';
+export 'payment.dart';
+export 'payment_method.dart';
+export 'reminder_scan.dart';
 export 'client.dart';
 
 class Protocol extends _isc.SerializationManager {
@@ -79,6 +87,18 @@ class Protocol extends _isc.SerializationManager {
     if (t == _iat4j3t6.InvoiceStatus) {
       return _iat4j3t6.InvoiceStatus.fromJson(data) as T;
     }
+    if (t == _iu6nkcru.MonthlySummary) {
+      return _iu6nkcru.MonthlySummary.fromJson(data) as T;
+    }
+    if (t == _ikmm2vup.Payment) {
+      return _ikmm2vup.Payment.fromJson(data) as T;
+    }
+    if (t == _imotz5ce.PaymentMethod) {
+      return _imotz5ce.PaymentMethod.fromJson(data) as T;
+    }
+    if (t == _i8razsu4.ReminderScan) {
+      return _i8razsu4.ReminderScan.fromJson(data) as T;
+    }
     if (t == _isc.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
     }
@@ -97,6 +117,20 @@ class Protocol extends _isc.SerializationManager {
     if (t == _isc.getType<_iat4j3t6.InvoiceStatus?>()) {
       return (data != null ? _iat4j3t6.InvoiceStatus.fromJson(data) : null)
           as T;
+    }
+    if (t == _isc.getType<_iu6nkcru.MonthlySummary?>()) {
+      return (data != null ? _iu6nkcru.MonthlySummary.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ikmm2vup.Payment?>()) {
+      return (data != null ? _ikmm2vup.Payment.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_imotz5ce.PaymentMethod?>()) {
+      return (data != null ? _imotz5ce.PaymentMethod.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i8razsu4.ReminderScan?>()) {
+      return (data != null ? _i8razsu4.ReminderScan.fromJson(data) : null) as T;
     }
     if (t == List<_inr7qgak.InvoiceLine>) {
       return (data as List)
@@ -132,6 +166,10 @@ class Protocol extends _isc.SerializationManager {
       _ifja8moh.Invoice => 'Invoice',
       _inr7qgak.InvoiceLine => 'InvoiceLine',
       _iat4j3t6.InvoiceStatus => 'InvoiceStatus',
+      _iu6nkcru.MonthlySummary => 'MonthlySummary',
+      _ikmm2vup.Payment => 'Payment',
+      _imotz5ce.PaymentMethod => 'PaymentMethod',
+      _i8razsu4.ReminderScan => 'ReminderScan',
       _ => null,
     };
   }
@@ -156,6 +194,14 @@ class Protocol extends _isc.SerializationManager {
         return 'InvoiceLine';
       case _iat4j3t6.InvoiceStatus():
         return 'InvoiceStatus';
+      case _iu6nkcru.MonthlySummary():
+        return 'MonthlySummary';
+      case _ikmm2vup.Payment():
+        return 'Payment';
+      case _imotz5ce.PaymentMethod():
+        return 'PaymentMethod';
+      case _i8razsu4.ReminderScan():
+        return 'ReminderScan';
     }
     className = _iaic.Protocol().getClassNameForObject(data);
     if (className != null) {
@@ -192,6 +238,18 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'InvoiceStatus') {
       return deserialize<_iat4j3t6.InvoiceStatus>(data['data']);
+    }
+    if (dataClassName == 'MonthlySummary') {
+      return deserialize<_iu6nkcru.MonthlySummary>(data['data']);
+    }
+    if (dataClassName == 'Payment') {
+      return deserialize<_ikmm2vup.Payment>(data['data']);
+    }
+    if (dataClassName == 'PaymentMethod') {
+      return deserialize<_imotz5ce.PaymentMethod>(data['data']);
+    }
+    if (dataClassName == 'ReminderScan') {
+      return deserialize<_i8razsu4.ReminderScan>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);

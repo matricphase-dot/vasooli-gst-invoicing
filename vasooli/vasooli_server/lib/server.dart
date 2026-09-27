@@ -5,6 +5,7 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
 import 'src/cache_busting.dart';
+import 'src/generated/protocol.dart';
 import 'src/generated/serverpod.dart';
 import 'src/web/routes/app_config_route.dart';
 
@@ -102,4 +103,17 @@ void run(List<String> args) async {
 
   // Start the server.
   await pod.start();
+
+  // ---- Daily overdue scan ---------------------------------------------------
+  // A recurring future call, persisted in Postgres (so it survives restarts):
+  // every 24h it flips non-paid invoices past their due date to `overdue`
+  // and broadcasts each change on the invoices stream every device watches.
+  // The fixed identifier lets it be cancelled cleanly and keeps registration
+  // explicit; scheduling a duplicate identifier is harmless (the manager
+  // stores unique identifiers for runs, not one row per schedule).
+  await pod.futureCalls
+      .callRecurring(identifier: 'daily-overdue-scan')
+      .every(const Duration(hours: 24))
+      .reminderCalls
+      .overdueScan(ReminderScan());
 }

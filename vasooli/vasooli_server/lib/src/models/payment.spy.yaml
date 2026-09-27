@@ -1,0 +1,12 @@
+class: Payment
+table: payment
+fields:
+  invoiceId: int
+  amount: double
+  method: PaymentMethod
+  upiReference: String?
+  paidAt: DateTime
+  note: String?
+indexes:
+  payment_invoice_idx:
+    fields: invoiceId

@@ -1,0 +1,7 @@
+enum: PaymentMethod
+values:
+  - upi
+  - netbanking
+  - cash
+  - card
+  - other

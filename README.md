@@ -37,18 +37,29 @@ UI is just a window onto invariants that live behind typed endpoints.
 
 ## Status (updates as the build progresses)
 
-- ✅ Models: `Invoice`, `InvoiceLine`, `InvoiceStatus` (+ migrations)
+- ✅ Models: `Invoice`, `InvoiceLine`, `InvoiceStatus`, `Payment`,
+  `PaymentMethod`, `ReminderScan`, `MonthlySummary` (+ 3 migrations)
 - ✅ Server-side invariants: per-financial-year sequential invoice numbers,
   place-of-supply → CGST+SGST vs IGST split, rounding on the taxable total,
   GSTIN format **and mod-36 check digit**
 - ✅ Serializable `InvalidGstinException` — clients get a precise message,
   not a 500
-- ✅ Endpoints: `createInvoice`, `markPaid`, `listInvoices`
-- ✅ 20 tests passing (13 unit + 7 integration via `serverpod_test`)
-- ✅ Live demo driver end-to-end over HTTP
-- ⏳ Streams (live receivables), payments/UPI import, recurring reminder
-  future calls, storage for PDFs, auth, Serverpod Cloud deploy — per
-  [`docs/build-plan.md`](docs/build-plan.md)
+- ✅ Endpoints: `createInvoice` (now with `dueDate`), `listInvoices`,
+  `recordPayment` (UPI ref, exact-amount match, refuses double-pay and
+  partials), `markPaid`, `scanOverdue`, `monthlySummary`, and streamed
+  `watchInvoices`
+- ✅ **Streams:** every mutation posts to `invoices/updates`; the demo shows
+  ledger events arriving over a live subscription — the same stream the
+  Flutter UI will bind to
+- ✅ **Future calls:** `daily-overdue-scan` registered at boot
+  (`callRecurring(...).every(24h)`), flips non-paid past-due invoices to
+  `overdue` and broadcasts each flip
+- ✅ 26 tests passing (13 unit + 13 integration via `serverpod_test`);
+  zero-dep GSTIN checker CLI adds 24 more
+- ✅ Demo: 8-beat narrative with real transcript
+  ([`gst-invoicing-demo/demo_transcript.md`](gst-invoicing-demo/demo_transcript.md))
+- ⏳ PDF invoices, AI features, Flutter UI, Serverpod Cloud deploy — per
+  [`docs/build-plan.md`](docs/build-plan.md) and [`docs/DEPLOY.md`](docs/DEPLOY.md)
 
 ## Run it locally (no Docker needed — Serverpod 4 embeds Postgres)
 

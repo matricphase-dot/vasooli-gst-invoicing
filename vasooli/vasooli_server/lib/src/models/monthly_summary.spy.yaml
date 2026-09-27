@@ -1,0 +1,16 @@
+# Non-table result type for the monthlySummary endpoint.
+class: MonthlySummary
+fields:
+  financialYear: String
+  month: int
+  invoiceCount: int
+  draftCount: int
+  sentCount: int
+  paidCount: int
+  overdueCount: int
+  totalTaxable: double
+  cgst: double
+  sgst: double
+  igst: double
+  collected: double
+  outstanding: double

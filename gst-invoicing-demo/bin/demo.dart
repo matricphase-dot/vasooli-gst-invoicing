@@ -1,7 +1,8 @@
-// Live demo driver: drives the running Vasooli server over HTTP and prints
-// the narrative used in the hackathon demo video.
+// Live demo driver: drives the running Vasooli server over HTTP (and the
+// invoices stream over websockets) and prints the narrative used in the
+// hackathon demo video.
 //
-// Prereqs: server running on http://localhost:8080 (see README.md).
+// Prereq: server running on http://localhost:8080 (see README.md).
 //
 // Run:  dart run bin/demo.dart [--fy 2026-27] [--url http://localhost:8080/]
 //       dart run bin/demo.dart --out transcript.md
@@ -13,9 +14,8 @@ late Client client;
 final StringBuffer _transcript = StringBuffer();
 
 String money(double v) {
-  final fixed = v == v.roundToDouble()
-      ? v.toStringAsFixed(0)
-      : v.toStringAsFixed(2);
+  final fixed =
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
   final parts = fixed.split('.');
   final intPart = parts.first;
   final buf = StringBuffer();
@@ -33,7 +33,7 @@ void say([String line = '']) {
 }
 
 String invoiceLine(Invoice i) =>
-    '  #${i.invoiceNumber}  ${i.clientName.padRight(26)} ${i.status.name.padRight(6)} '
+    '  #${i.invoiceNumber}  ${i.clientName.padRight(26)} ${i.status.name.padRight(7)} '
     'taxable ${money(i.totalTaxable).padLeft(10)} '
     'CGST ${money(i.cgst).padLeft(7)} SGST ${money(i.sgst).padLeft(7)} '
     'IGST ${money(i.igst).padLeft(9)} total ${money(i.grandTotal).padLeft(10)}';
@@ -48,14 +48,21 @@ Future<void> printLedger(String fy) async {
     say(invoiceLine(inv));
   }
   final outstanding = invoices
-      .where((i) => i.status.name != 'paid')
+      .where((i) => i.status != InvoiceStatus.paid)
       .fold<double>(0, (s, i) => s + i.grandTotal);
   final received = invoices
-      .where((i) => i.status.name == 'paid')
+      .where((i) => i.status == InvoiceStatus.paid)
       .fold<double>(0, (s, i) => s + i.grandTotal);
-  say('  ─'.padRight(20, '─'));
+  say('  ${'─' * 18}');
   say('  outstanding: ${money(outstanding)}    received: ${money(received)}');
 }
+
+InvoiceLine line(String description, double taxable) => InvoiceLine(
+      description: description,
+      hsnSac: '998314',
+      taxableValue: taxable,
+      gstRatePercent: 18,
+    );
 
 Future<void> main(List<String> args) async {
   var fy = '2026-27';
@@ -79,66 +86,61 @@ Future<void> main(List<String> args) async {
   say('╔══════════════════════════════════════════════════════════════════╗');
   say('║  VASOOLI — GST invoicing for Indian freelancers, live on        ║');
   say('║  Serverpod 4. Demo driver, no UI: every call below is a real    ║');
-  say('║  HTTP call to the running server.                               ║');
+  say('║  request to the running server.                                 ║');
   say('╚══════════════════════════════════════════════════════════════════╝');
   say();
   say('Scenario: you are a freelancer in Maharashtra (state 27), FY $fy.');
   say();
 
-  say('── 1. Invoice for a Mumbai client (intra-state) ──────────────────');
-  say('   2 lines, ₹50,000 @ 18% GST. Tax split is computed server-side;');
-  say('   the client app never sends tax amounts.');
+  say('── 0. The live feed is already listening ─────────────────────────');
+  final streamed = <Invoice>[];
+  final sub = client.invoices.watchInvoices().listen((invoice) {
+    streamed.add(invoice);
+  });
+  say('   subscribed to the invoices stream — every server-side change from');
+  say('   here on should appear over the wire, no polling.');
+  // Give the stream a beat to fully connect before mutations start;
+  // events posted before the connection is established are not replayed.
+  await Future<void>.delayed(const Duration(seconds: 2));
+  say();
+
+  say('── 1. Invoice for a Mumbai client (intra-state), due next week ───');
+  final in7d = DateTime.now().add(const Duration(days: 7));
   final intra = await client.invoices.createInvoice(
     clientName: 'Acme Consulting LLP',
     clientGstin: '27AAACA1234A1ZK', // valid check digit
     supplierStateCode: 27,
     placeOfSupplyStateCode: 27,
     financialYear: fy,
+    dueDate: in7d,
     lines: [
-      InvoiceLine(
-        description: 'Flutter app development',
-        hsnSac: '998314',
-        taxableValue: 45000,
-        gstRatePercent: 18,
-      ),
-      InvoiceLine(
-        description: 'Play Store release support',
-        hsnSac: '998314',
-        taxableValue: 5000,
-        gstRatePercent: 18,
-      ),
+      line('Flutter app development', 45000),
+      line('Play Store release support', 5000),
     ],
   );
   say(invoiceLine(intra));
   say('   → place of supply == supplier state ⇒ CGST ${money(intra.cgst)} '
-      '+ SGST ${money(intra.sgst)}, no IGST. Invoice number "${intra.invoiceNumber}" '
-      'assigned by the server (sequential per FY).');
+      '+ SGST ${money(intra.sgst)}. Number "${intra.invoiceNumber}" assigned '
+      'by the server (sequential per FY). Due ${in7d.toLocal().toString().split(' ').first}.');
   say();
 
-  say('── 2. Invoice for a Bengaluru client (inter-state) ───────────────');
+  say('── 2. Invoice for a Bengaluru client (inter-state), ALREADY DUE ──');
+  final yesterday = DateTime.now().subtract(const Duration(days: 1));
   final inter = await client.invoices.createInvoice(
     clientName: 'Bengaluru Backend Co',
     clientGstin: '29AABCB7654P1ZZ',
     supplierStateCode: 27,
     placeOfSupplyStateCode: 29,
     financialYear: fy,
-    lines: [
-      InvoiceLine(
-        description: 'API integration workshop, 2 days',
-        hsnSac: '998314',
-        taxableValue: 80000,
-        gstRatePercent: 18,
-      ),
-    ],
+    dueDate: yesterday, // they never paid on time
+    lines: [line('API integration workshop, 2 days', 80000)],
   );
   say(invoiceLine(inter));
-  say('   → inter-state supply ⇒ IGST ${money(inter.igst)} at the full rate, '
-      'and this is invoice number "${inter.invoiceNumber}" — the next in the series.');
+  say('   → inter-state supply ⇒ IGST ${money(inter.igst)}; due date is in');
+  say('   the past, so the overdue machinery below should catch it.');
   say();
 
   say('── 3. The GSTIN typo that spreadsheet invoicing never catches ────');
-  say('   Same client GSTIN as invoice #${intra.invoiceNumber} but with a '
-      'wrong last character:');
   try {
     await client.invoices.createInvoice(
       clientName: 'Acme Consulting LLP',
@@ -146,19 +148,12 @@ Future<void> main(List<String> args) async {
       supplierStateCode: 27,
       placeOfSupplyStateCode: 27,
       financialYear: fy,
-      lines: [
-        InvoiceLine(
-          description: 'Should never persist',
-          hsnSac: '998314',
-          taxableValue: 100,
-          gstRatePercent: 18,
-        ),
-      ],
+      lines: [line('Should never persist', 100)],
     );
     say('   ✗ UNEXPECTED: the server accepted a bad GSTIN — bug!');
   } on InvalidGstinException catch (e) {
     say('   ✓ server refused it: ${e.message}');
-    say('   (the format is fine; the mod-36 check digit exposes the typo —');
+    say('   (format is fine; the mod-36 check digit exposes the typo —');
     say('   without this, the real client cannot claim input tax credit)');
   }
   say();
@@ -167,21 +162,64 @@ Future<void> main(List<String> args) async {
   await printLedger(fy);
   say();
 
-  say('── 5. Acme pays by UPI — mark as paid, ledger drops live ─────────');
-  final paid = await client.invoices.markPaid(intra.id!);
-  say('   #${paid.invoiceNumber} ${paid.clientName} → status '
-      '${paid.status.name.toUpperCase()}');
+  say('── 5. The daily overdue scan runs (a future call runs it at 09:00) ');
+  final changed = await client.invoices.scanOverdue(fy);
+  say('   $changed invoice(s) flipped to overdue this pass:');
+  for (final inv in await client.invoices.listInvoices(fy)) {
+    if (inv.status == InvoiceStatus.overdue) say(invoiceLine(inv));
+  }
+  say();
+
+  say('── 6. Acme pays ${money(intra.grandTotal)} by UPI — recorded with the UPI ref ──');
+  final paid = await client.invoices.recordPayment(
+    invoiceId: intra.id!,
+    amount: intra.grandTotal,
+    method: PaymentMethod.upi,
+    upiReference: 'UTR-20260927-8843',
+  );
+  say('   #${paid.invoiceNumber} ${paid.clientName} → ${paid.status.name.toUpperCase()}'
+      '   UPI ref UTR-20260927-8843 saved on the Payment row');
+  say('   (an extra ₹1 or a repeat tap of pay is refused — exact-amount ledger)');
   await printLedger(fy);
   say();
 
+  say('── 7. What my phone would have shown the whole time ──────────────');
+  await Future<void>.delayed(const Duration(seconds: 2));
+  await sub.cancel();
+  if (streamed.isEmpty) {
+    say('   (no stream events received — check the stream path!)');
+  } else {
+    say('   over the invoices stream, unprompted, arrived:');
+    for (final inv in streamed) {
+      say(invoiceLine(inv));
+    }
+    say('   → the same hook the Flutter app uses; its UI tier is built on');
+    say('     exactly these events, which is why two devices stay in sync.');
+  }
+  say();
+
+  say('── 8. Month-end, done ────────────────────────────────────────────');
+  final summary = await client.invoices.monthlySummary(fy, DateTime.now().month);
+  say('   FY ${summary.financialYear}, month ${summary.month}: '
+      '${summary.invoiceCount} invoices '
+      '(${summary.paidCount} paid, ${summary.overdueCount} overdue, '
+      '${summary.draftCount} draft, ${summary.sentCount} sent)');
+  say('   taxable ${money(summary.totalTaxable)}  '
+      'CGST ${money(summary.cgst)}  SGST ${money(summary.sgst)}  '
+      'IGST ${money(summary.igst)}');
+  say('   collected ${money(summary.collected)}  '
+      'still out ${money(summary.outstanding)}');
+  say();
+
   say('── What this demo proves ─────────────────────────────────────────');
-  say('   • Typed end-to-end models: Dart from the UI to Postgres, no SQL,');
-  say('     no hand-written JSON plumbing.');
-  say('   • Server-side invariants the app cannot bypass: sequential');
-  say('     per-FY invoice numbers, place-of-supply tax split, rounding on');
-  say('     the taxable total, GSTIN check-digit validation.');
-  say('   • It actually works: HTTP 200 on the API root, and every number');
-  say('     above comes from a live database, not a mock.');
+  say('   • typed end-to-end models (Dart UI → Postgres, no SQL, no JSON),');
+  say('   • server-side invariants the app cannot bypass: sequential per-FY');
+  say('     numbers, place-of-supply tax split, rounding on the total, GSTIN');
+  say('     check-digit validation, no partial payments, no double-paying;');
+  say('   • Serverpod 4 doing what it\u2019s good at: a real stream feeding every');
+  say('     device, a recurring future call for the daily overdue scan, and');
+  say('     typed exceptions reaching the caller with a precise message;');
+  say('   • it works: every number above is a live DB row, not a mock.');
 
   if (outPath != null) {
     File(outPath).writeAsStringSync(_transcript.toString());

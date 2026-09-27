@@ -109,6 +109,31 @@ failures, exit non-zero with: database name probed, the endpoint actually
 connected to (from the embedded state file if resolved that way), and the
 supported recovery (`serverpod` command or file to remove).
 
+### 3. Optional/defaulted endpoint parameters become mandatory in generated clients
+
+**Date:** 2026-09-27 · **Where:** `serverpod generate` output — Dart client + test-tool wrappers.
+
+An endpoint declared with a defaulted parameter —
+
+```dart
+Future<Invoice> recordPayment(Session session, int invoiceId, int amountPaise,
+    {PaymentMethod method = PaymentMethod.upi, String? reference})
+```
+
+— generates client and test-tool code where **`method` is required, default
+gone**, while the server-side implementation keeps its default. The compiler
+output is the only notice you get:
+
+```
+error • missing_required_argument • The named parameter 'method' is required
+```
+
+After regenerating, every previously-compiling caller breaks. **Suggested
+fix:** carry declared defaults into the generated protocol stubs where the
+target language allows (Dart does), or emit an explicit generate-time warning
+("endpoint `invoices.recordPayment`: default of `method` will not be visible
+to clients").
+
 ## Suggested integrations
 
 _Format: date · what · why a Serverpod user needs it_

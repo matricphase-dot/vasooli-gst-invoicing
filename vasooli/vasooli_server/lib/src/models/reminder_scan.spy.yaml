@@ -1,0 +1,5 @@
+# Trigger payload for the daily overdue-scan future call.
+# Not a table — just the serializable trigger object.
+class: ReminderScan
+fields:
+  financialYear: String?

@@ -22,6 +22,7 @@ abstract class Invoice
     required this.invoiceNumber,
     required this.financialYear,
     required this.issueDate,
+    this.dueDate,
     required this.clientName,
     this.clientGstin,
     required this.supplierStateCode,
@@ -40,6 +41,7 @@ abstract class Invoice
     required String invoiceNumber,
     required String financialYear,
     required DateTime issueDate,
+    DateTime? dueDate,
     required String clientName,
     String? clientGstin,
     required int supplierStateCode,
@@ -61,6 +63,9 @@ abstract class Invoice
       issueDate: _isc.DateTimeJsonExtension.fromJson(
         jsonSerialization['issueDate'],
       ),
+      dueDate: jsonSerialization['dueDate'] == null
+          ? null
+          : _isc.DateTimeJsonExtension.fromJson(jsonSerialization['dueDate']),
       clientName: jsonSerialization['clientName'] as String,
       clientGstin: jsonSerialization['clientGstin'] as String?,
       supplierStateCode: jsonSerialization['supplierStateCode'] as int,
@@ -90,6 +95,8 @@ abstract class Invoice
   String financialYear;
 
   DateTime issueDate;
+
+  DateTime? dueDate;
 
   String clientName;
 
@@ -121,6 +128,7 @@ abstract class Invoice
     String? invoiceNumber,
     String? financialYear,
     DateTime? issueDate,
+    DateTime? dueDate,
     String? clientName,
     String? clientGstin,
     int? supplierStateCode,
@@ -141,6 +149,7 @@ abstract class Invoice
       'invoiceNumber': invoiceNumber,
       'financialYear': financialYear,
       'issueDate': issueDate.toJson(),
+      if (dueDate != null) 'dueDate': dueDate?.toJson(),
       'clientName': clientName,
       if (clientGstin != null) 'clientGstin': clientGstin,
       'supplierStateCode': supplierStateCode,
@@ -163,6 +172,7 @@ abstract class Invoice
       'invoiceNumber': invoiceNumber,
       'financialYear': financialYear,
       'issueDate': issueDate.toJson(),
+      if (dueDate != null) 'dueDate': dueDate?.toJson(),
       'clientName': clientName,
       if (clientGstin != null) 'clientGstin': clientGstin,
       'supplierStateCode': supplierStateCode,
@@ -191,6 +201,7 @@ class _InvoiceImpl extends Invoice {
     required String invoiceNumber,
     required String financialYear,
     required DateTime issueDate,
+    DateTime? dueDate,
     required String clientName,
     String? clientGstin,
     required int supplierStateCode,
@@ -207,6 +218,7 @@ class _InvoiceImpl extends Invoice {
          invoiceNumber: invoiceNumber,
          financialYear: financialYear,
          issueDate: issueDate,
+         dueDate: dueDate,
          clientName: clientName,
          clientGstin: clientGstin,
          supplierStateCode: supplierStateCode,
@@ -229,6 +241,7 @@ class _InvoiceImpl extends Invoice {
     String? invoiceNumber,
     String? financialYear,
     DateTime? issueDate,
+    Object? dueDate = _Undefined,
     String? clientName,
     Object? clientGstin = _Undefined,
     int? supplierStateCode,
@@ -246,6 +259,7 @@ class _InvoiceImpl extends Invoice {
       invoiceNumber: invoiceNumber ?? this.invoiceNumber,
       financialYear: financialYear ?? this.financialYear,
       issueDate: issueDate ?? this.issueDate,
+      dueDate: dueDate is DateTime? ? dueDate : this.dueDate,
       clientName: clientName ?? this.clientName,
       clientGstin: clientGstin is String? ? clientGstin : this.clientGstin,
       supplierStateCode: supplierStateCode ?? this.supplierStateCode,
