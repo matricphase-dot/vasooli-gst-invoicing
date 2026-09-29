@@ -134,6 +134,22 @@ target language allows (Dart does), or emit an explicit generate-time warning
 ("endpoint `invoices.recordPayment`: default of `method` will not be visible
 to clients").
 
+### 4. Only the three built-in run modes are accepted; custom ones can't be passed with `-r`
+
+**Date:** 2026-09-29 · **Where:** server startup argument parsing.
+
+I wanted a small fourth mode ("preview" — my sandbox's public proxy) and
+tried `dart bin/main.dart -r preview`. The server rejected it
+(`"preview" is not an allowed value for option "-r"`, falling back to
+development) and the generated `Serverpod` wrapper exposes no
+`allowedRunModes` parameter to extend the list — the set
+development/staging/production is hardwired. **Workaround I shipped:**
+`Serverpod(args, configOverride: ...)` — override the config after load
+instead of adding a mode (works fine, but undiscoverable from the error).
+**Suggested fix:** either expose `allowedRunModes` passthrough in the
+generated class (one line), or document config-override-by-env as the
+supported pattern in the Configuration doc page.
+
 ## Suggested integrations
 
 _Format: date · what · why a Serverpod user needs it_
