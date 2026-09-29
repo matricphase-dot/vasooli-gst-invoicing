@@ -11,11 +11,11 @@ Scenario: you are a freelancer in Maharashtra (state 27), FY 2026-27.
    here on should appear over the wire, no polling.
 
 ── 1. Invoice for a Mumbai client (intra-state), due next week ───
-  #7  Acme Consulting LLP        draft   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-   → place of supply == supplier state ⇒ CGST ₹4,500 + SGST ₹4,500. Number "7" assigned by the server (sequential per FY). Due 2026-10-04.
+  #1  Acme Consulting LLP        draft   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+   → place of supply == supplier state ⇒ CGST ₹4,500 + SGST ₹4,500. Number "1" assigned by the server (sequential per FY). Due 2026-10-06.
 
 ── 2. Invoice for a Bengaluru client (inter-state), ALREADY DUE ──
-  #8  Bengaluru Backend Co       draft   taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #2  Bengaluru Backend Co       draft   taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
    → inter-state supply ⇒ IGST ₹14,400; due date is in
    the past, so the overdue machinery below should catch it.
 
@@ -25,51 +25,36 @@ Scenario: you are a freelancer in Maharashtra (state 27), FY 2026-27.
    without this, the real client cannot claim input tax credit)
 
 ── 4. The ledger, live from Postgres ─────────────────────────────
-  #1  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #2  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #3  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #4  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #5  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #6  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #7  Acme Consulting LLP        draft   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #8  Bengaluru Backend Co       draft   taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #1  Acme Consulting LLP        draft   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #2  Bengaluru Backend Co       draft   taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
   ──────────────────
-  outstanding: ₹436,600    received: ₹177,000
+  outstanding: ₹153,400    received: ₹0
 
 ── 5. The daily overdue scan runs (a future call runs it at 09:00) 
    1 invoice(s) flipped to overdue this pass:
   #2  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #4  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #6  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #8  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
 
 ── 6. Acme pays ₹59,000 by UPI — recorded with the UPI ref ──
-   #7 Acme Consulting LLP → PAID   UPI ref UTR-20260927-8843 saved on the Payment row
+   #1 Acme Consulting LLP → PAID   UPI ref UTR-20260927-8843 saved on the Payment row
    (an extra ₹1 or a repeat tap of pay is refused — exact-amount ledger)
   #1  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
   #2  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #3  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #4  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #5  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #6  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #7  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #8  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
   ──────────────────
-  outstanding: ₹377,600    received: ₹236,000
+  outstanding: ₹94,400    received: ₹59,000
 
 ── 7. What my phone would have shown the whole time ──────────────
    over the invoices stream, unprompted, arrived:
-  #7  Acme Consulting LLP        draft   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
-  #8  Bengaluru Backend Co       draft   taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #8  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
-  #7  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #1  Acme Consulting LLP        draft   taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
+  #2  Bengaluru Backend Co       draft   taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #2  Bengaluru Backend Co       overdue taxable    ₹80,000 CGST      ₹0 SGST      ₹0 IGST   ₹14,400 total    ₹94,400
+  #1  Acme Consulting LLP        paid    taxable    ₹50,000 CGST  ₹4,500 SGST  ₹4,500 IGST        ₹0 total    ₹59,000
    → the same hook the Flutter app uses; its UI tier is built on
      exactly these events, which is why two devices stay in sync.
 
 ── 8. Month-end, done ────────────────────────────────────────────
-   FY 2026-27, month 9: 8 invoices (4 paid, 4 overdue, 0 draft, 0 sent)
-   taxable ₹520,000  CGST ₹18,000  SGST ₹18,000  IGST ₹57,600
-   collected ₹236,000  still out ₹377,600
+   FY 2026-27, month 9: 2 invoices (1 paid, 1 overdue, 0 draft, 0 sent)
+   taxable ₹130,000  CGST ₹4,500  SGST ₹4,500  IGST ₹14,400
+   collected ₹59,000  still out ₹94,400
 
 ── What this demo proves ─────────────────────────────────────────
    • typed end-to-end models (Dart UI → Postgres, no SQL, no JSON),

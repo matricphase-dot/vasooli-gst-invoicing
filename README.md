@@ -30,36 +30,41 @@ UI is just a window onto invariants that live behind typed endpoints.
 
 | Directory | What |
 |---|---|
-| [`vasooli/`](vasooli/) | The Serverpod 4 project: `vasooli_server` (models, endpoints, migrations), `vasooli_client` (generated typed client), `vasooli_flutter` (the app — UI milestone in progress) |
+| [`vasooli/`](vasooli/) | The Serverpod 4 project: `vasooli_server` (models, endpoints, migrations), `vasooli_client` (generated typed client), `vasooli_flutter` (the app — completed live ledger + PDF tier) |
 | [`gst-invoice-checker/`](gst-invoice-checker/) | Standalone zero-dependency **CLI validator** for invoices: GSTIN check digit, Rule 46 numbers, tax recomputation. 24 tests. |
 | [`gst-invoicing-demo/`](gst-invoicing-demo/) | No-UI **live demo driver** that runs the demo story against the running API as real HTTP calls and emits a transcript |
 | [`docs/`](docs/) | Build plan + feature map, and the running Serverpod feedback log |
 
 ## Status (updates as the build progresses)
 
+- ✅ **Flutter web app** (`vasooli/vasooli_flutter`): live ledger driven by
+  the `watchInvoices` stream, GSTIN check-digit feedback as you type,
+  new-invoice form with per-line GST%, record-payment dialog that refuses
+  partials and double-pays, Rule-46 PDF sharing, month-end GSTR summary.
+  Served by the server itself at `/` — `web/app` build output.
 - ✅ Models: `Invoice`, `InvoiceLine`, `InvoiceStatus`, `Payment`,
   `PaymentMethod`, `ReminderScan`, `MonthlySummary` (+ 3 migrations)
 - ✅ Server-side invariants: per-financial-year sequential invoice numbers,
   place-of-supply → CGST+SGST vs IGST split, rounding on the taxable total,
   GSTIN format **and mod-36 check digit**
-- ✅ Serializable `InvalidGstinException` — clients get a precise message,
-  not a 500
-- ✅ Endpoints: `createInvoice` (now with `dueDate`), `listInvoices`,
+- ✅ Serializable `InvalidGstinException` — the app shows the precise message
+- ✅ Endpoints: `createInvoice` (with `dueDate`), `listInvoices`,
   `recordPayment` (UPI ref, exact-amount match, refuses double-pay and
   partials), `markPaid`, `scanOverdue`, `monthlySummary`, and streamed
   `watchInvoices`
-- ✅ **Streams:** every mutation posts to `invoices/updates`; the demo shows
-  ledger events arriving over a live subscription — the same stream the
-  Flutter UI will bind to
+- ✅ **Streams:** every mutation posts to `invoices/updates`; the app and the
+  demo both consume the same event source — two devices stay in sync
 - ✅ **Future calls:** `daily-overdue-scan` registered at boot
-  (`callRecurring(...).every(24h)`), flips non-paid past-due invoices to
-  `overdue` and broadcasts each flip
-- ✅ 26 tests passing (13 unit + 13 integration via `serverpod_test`);
-  zero-dep GSTIN checker CLI adds 24 more
+  (`callRecurring(...).every(24h)`)
+- ✅ `/health` route (JSON: status, version, runMode) on the web server
+- ✅ Tests: server 26 (13 unit + 13 integration), GSTIN checker CLI 24,
+  app 8 — all green
 - ✅ Demo: 8-beat narrative with real transcript
   ([`gst-invoicing-demo/demo_transcript.md`](gst-invoicing-demo/demo_transcript.md))
-- ⏳ PDF invoices, AI features, Flutter UI, Serverpod Cloud deploy — per
-  [`docs/build-plan.md`](docs/build-plan.md) and [`docs/DEPLOY.md`](docs/DEPLOY.md)
+- ⏳ UPI statement import, auth UI wiring (server-side email/JWT auth is
+  scaffolded), offline sync — stretch goals per
+  [`docs/build-plan.md`](docs/build-plan.md)
+- ⏳ Deployment to Serverpod Cloud — runbook in [`docs/DEPLOY.md`](docs/DEPLOY.md)
 
 ## Run it locally (no Docker needed — Serverpod 4 embeds Postgres)
 

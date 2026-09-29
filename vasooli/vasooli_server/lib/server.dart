@@ -8,12 +8,34 @@ import 'src/cache_busting.dart';
 import 'src/generated/protocol.dart';
 import 'src/generated/serverpod.dart';
 import 'src/web/routes/app_config_route.dart';
+import 'src/web/routes/health_route.dart';
+
+/// When VASOOLI_PREVIEW_SANDBOX is set (the e2b sandbox id), rewrite the
+/// public URL of every server to `https://<port>-<id>.e2b.app`. The browser
+/// that loads the Flutter web app is NOT this machine, so the config.json
+/// it fetches must point the API at the public proxy host, not localhost.
+ServerpodConfig _previewProxyOverride(ServerpodConfig config) {
+  final sandbox = Platform.environment['VASOOLI_PREVIEW_SANDBOX'];
+  if (sandbox == null || sandbox.isEmpty) return config;
+  ServerConfig proxied(ServerConfig s) => ServerConfig(
+        port: s.port,
+        publicHost: '${s.port}-$sandbox.e2b.app',
+        publicPort: 443,
+        publicScheme: 'https',
+      );
+  return config.copyWith(
+    apiServer: proxied(config.apiServer),
+    insightsServer:
+        config.insightsServer == null ? null : proxied(config.insightsServer!),
+    webServer: config.webServer == null ? null : proxied(config.webServer!),
+  );
+}
 
 /// The starting point of the Serverpod server.
 void run(List<String> args) async {
   // Initialize Serverpod. The generated Serverpod class is already connected
   // with your project's generated code.
-  final pod = Serverpod(args);
+  final pod = Serverpod(args, configOverride: _previewProxyOverride);
 
   // Initialize authentication services for the server.
   // Token managers will be used to validate and issue authentication keys,
@@ -49,6 +71,12 @@ void run(List<String> args) async {
   pod.webServer.addRoute(
     AppConfigRoute(apiConfig: pod.config.apiServer),
     '/assets/assets/config.json',
+  );
+
+  // Liveness/version probe for the submission and for Serverpod Cloud checks.
+  pod.webServer.addRoute(
+    HealthRoute(runMode: pod.runMode),
+    '/health',
   );
 
   // Checks if the flutter web app has been built and serves it if it has.

@@ -1,61 +1,56 @@
 import 'package:flutter/material.dart';
 
 import 'client.dart';
-import 'screens/greetings_screen.dart';
+import 'screens/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeClient();
-  runApp(const MyApp());
+  runApp(const VasooliApp());
 }
 
-/// Builds a theme for the given [brightness].
-ThemeData _buildTheme(Brightness brightness) {
-  return ThemeData(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.blue,
+/// Vasooli — GST-correct invoicing and UPI payment tracking for Indian
+/// freelancers. The Flutter tier talks only to the generated typed client;
+/// every GST rule lives on the server.
+class VasooliApp extends StatelessWidget {
+  const VasooliApp({super.key});
+
+  static const _saffron = Color(0xFFE8710A);
+  static const _ink = Color(0xFF1B1B1F);
+
+  ThemeData _theme(Brightness brightness) {
+    final scheme = ColorScheme.fromSeed(
+      seedColor: _saffron,
       brightness: brightness,
-    ),
-  );
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+    );
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: scheme,
+      scaffoldBackgroundColor:
+          brightness == Brightness.light ? const Color(0xFFFAF7F2) : _ink,
+      appBarTheme: AppBarTheme(
+        backgroundColor: scheme.surface,
+        foregroundColor: scheme.onSurface,
+        elevation: 0,
+      ),
+      cardTheme: CardThemeData(
+        clipBehavior: Clip.antiAlias,
+        elevation: 0,
+        color: brightness == Brightness.light
+            ? Colors.white
+            : scheme.surfaceContainerHigh,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Serverpod Demo',
-      theme: _buildTheme(Brightness.light),
-      darkTheme: _buildTheme(Brightness.dark),
-      themeMode: ThemeMode.system,
-      home: const MyHomePage(title: 'Serverpod Example'),
-    );
-  }
-}
-
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: const GreetingsScreen(),
-      // To test authentication in this example app, uncomment the line below
-      // and comment out the line above. This wraps the GreetingsScreen with a
-      // SignInScreen, which automatically shows a sign-in UI when the user is
-      // not authenticated and displays the GreetingsScreen once they sign in.
-      //
-      // body: SignInScreen(
-      //   child: GreetingsScreen(
-      //     onSignOut: () async {
-      //       await client.auth.signOutDevice();
-      //     },
-      //   ),
-      // ),
+      title: 'Vasooli — GST invoices that get you paid',
+      debugShowCheckedModeBanner: false,
+      theme: _theme(Brightness.light),
+      darkTheme: _theme(Brightness.dark),
+      home: const DashboardScreen(),
     );
   }
 }

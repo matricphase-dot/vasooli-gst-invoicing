@@ -31,6 +31,25 @@ $ serverpod cloud launch                        # first time: guided project set
 * writes `scloud.yaml` into the server package (project id, deployment
   settings) — **commit this file** once it's created.
 
+## Flutter web build (for `web/app`)
+
+The server serves the built app at `/` (via `FlutterRoute`, falling back to a
+"build the app" page when `web/app` is absent). The launch flow asks about
+**pre-deploy scripts** — answer yes; they run `flutter build web` and copy
+`build/web` into `web/app` before upload. Locally:
+
+```console
+$ cd vasooli/vasooli_flutter
+$ flutter build web --release -O1 --no-wasm-dry-run     # ~45 s even on 2 GB CI
+$ rm -rf ../vasooli_server/web/app && cp -r build/web ../vasooli_server/web/app
+```
+
+The built app stays API-URL-agnostic: at runtime it asks the serving server
+for `/assets/assets/config.json`, which `server.dart`'s `AppConfigRoute`
+fills with the server's real public URL — the same artifact works locally,
+behind a preview proxy, and on Cloud. So don't bake `--dart-define=SERVER_URL`
+into the Cloud build.
+
 ## Database & migrations
 
 The managed Postgres is provisioned automatically. Apply the migrations on

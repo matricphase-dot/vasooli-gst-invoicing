@@ -6,3 +6,5 @@ build/
 # Local IDE
 .idea/
 *.iml
+# Built Flutter web bundle handed to the server (rebuild via vasooli_flutter/README.md)
+vasooli/vasooli_server/web/app/
